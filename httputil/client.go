@@ -107,9 +107,18 @@ func (c *Client) reqJSON(m, p string, r io.Reader) (*http.Request, error) {
 
 // Put puts a stream to a path on the server.
 func (c *Client) Put(p string, r io.Reader) error {
+	return c.PutN(p, r, -1)
+}
+
+// PutN puts a stream to a path on the server with content length
+// set to n.
+func (c *Client) PutN(p string, r io.Reader, n int64) error {
 	req, err := c.req(http.MethodPut, p, r)
 	if err != nil {
 		return err
+	}
+	if n >= 0 {
+		req.ContentLength = n
 	}
 
 	resp, err := c.do(req)
@@ -121,7 +130,7 @@ func (c *Client) Put(p string, r io.Reader) error {
 
 // PutBytes puts bytes to a path on the server.
 func (c *Client) PutBytes(p string, bs []byte) error {
-	return c.Put(p, bytes.NewBuffer(bs))
+	return c.PutN(p, bytes.NewBuffer(bs), int64(len(bs)))
 }
 
 // JSONPut puts an object in JSON encoding.
@@ -138,7 +147,6 @@ func (c *Client) poke(m, p string) error {
 	if err != nil {
 		return err
 	}
-
 	resp, err := c.do(req)
 	if err != nil {
 		return err
@@ -227,17 +235,6 @@ func (c *Client) JSONGet(p string, resp interface{}) error {
 	return httpResp.Body.Close()
 }
 
-func copyRespBody(resp *http.Response, w io.Writer) error {
-	defer resp.Body.Close()
-	if w == nil {
-		return nil
-	}
-	if _, err := io.Copy(w, resp.Body); err != nil {
-		return err
-	}
-	return resp.Body.Close()
-}
-
 // Post posts with request body from r, and copies the response body
 // to w.
 func (c *Client) Post(p string, r io.Reader, w io.Writer) error {
@@ -260,7 +257,6 @@ func (c *Client) jsonPost(p string, req interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	httpReq, err := c.reqJSON(http.MethodPost, p, bytes.NewBuffer(bs))
 	if err != nil {
 		return nil, err
