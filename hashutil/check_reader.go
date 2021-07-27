@@ -47,6 +47,9 @@ func NewCheckReader(r io.Reader, h string, n int64) (*CheckReader, error) {
 	if err != nil {
 		return nil, errcode.Annotate(err, "decode sha256 hash")
 	}
+	if len(h2) != sha256.Size {
+		return nil, errcode.InvalidArgf("invalid hash size")
+	}
 	return NewSHA256CheckReader(r, h2, n), nil
 }
 
