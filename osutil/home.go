@@ -46,9 +46,9 @@ func NewHome(dir string) (*Home, error) {
 	return &Home{dir: dir}, nil
 }
 
-// Path returns a sub path under the home directory. p is in URL path, but
+// FilePath returns a sub path under the home directory. p is in URL path, but
 // the returned value is in filepath format, in OS's filepath separators.
-func (h *Home) Path(p string) string {
+func (h *Home) FilePath(p string) string {
 	if p == "" {
 		return h.dir
 	}
