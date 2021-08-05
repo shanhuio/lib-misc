@@ -17,6 +17,8 @@ package sqlx
 
 import (
 	"database/sql"
+
+	"shanhu.io/misc/strutil"
 )
 
 // DB is a wrapper that extends the sql.DB structure.
@@ -29,8 +31,9 @@ type DB struct {
 
 // Driver names.
 const (
-	Psql    = "postgres"
-	Sqlite3 = "sqlite3"
+	Psql     = "postgres"
+	Sqlite3  = "sqlite3"
+	SqliteGo = "sqlite" // pure-go, transpiled from C.
 )
 
 // OpenPsql opens a postgresql database.
@@ -41,11 +44,21 @@ func OpenPsql(source string) (*DB, error) {
 	return Open(Psql, source)
 }
 
+func pickSqliteDriver() string {
+	drivers := sql.Drivers()
+	set := strutil.MakeSet(drivers)
+	if set[SqliteGo] {
+		return SqliteGo
+	}
+	return Sqlite3
+}
+
 // OpenSqlite3 opens a sqlite3 database.
 func OpenSqlite3(file string) (*DB, error) {
 	if file == "" {
 		return nil, nil
 	}
+
 	return Open(Sqlite3, file)
 }
 
