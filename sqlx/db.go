@@ -58,8 +58,7 @@ func OpenSqlite3(file string) (*DB, error) {
 	if file == "" {
 		return nil, nil
 	}
-
-	return Open(Sqlite3, file)
+	return Open(pickSqliteDriver(), file)
 }
 
 // Open opens a database.
