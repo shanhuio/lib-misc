@@ -13,40 +13,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package timeutil
+package osutil
 
 import (
-	"time"
+	"os"
 )
 
-// Timestamp is a struct to record a UTC timestamp.
-// It is designed to be directly usable in Javascript.
-type Timestamp struct {
-	Sec  int64
-	Nano int64 `json:",omitempty"`
-}
-
-// Time returns the time of this timestamp in UTC.
-func (t *Timestamp) Time() time.Time {
-	return time.Unix(t.Sec, t.Nano).UTC()
-}
-
-// NewTimestamp creates a new timestamp from the given time.
-func NewTimestamp(t time.Time) *Timestamp {
-	nano := t.UnixNano()
-	sec := nano / 1e9
-	nano -= sec * 1e9
-	if nano < 0 {
-		nano += 1e9
-		sec--
+// Arg0 returns the first arg, often represents the name of the binary.
+func Arg0() string {
+	if len(os.Args) == 0 {
+		return ""
 	}
-	return &Timestamp{
-		Sec:  sec,
-		Nano: nano,
-	}
-}
-
-// TimestampNow creates a time stamp of the time now.
-func TimestampNow() *Timestamp {
-	return NewTimestamp(time.Now())
+	return os.Args[0]
 }
