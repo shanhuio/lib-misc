@@ -31,7 +31,7 @@ func NewTimestamp(t time.Time) *Timestamp {
 	}
 }
 
-// Now creates a time stamp of the time now.
-func Now() *Timestamp {
+// TimestampNow creates a time stamp of the time now.
+func TimestampNow() *Timestamp {
 	return NewTimestamp(time.Now())
 }
