@@ -33,3 +33,14 @@ func SetAuthToken(h http.Header, tok string) {
 type TokenSource interface {
 	Token(ctx context.Context) (string, error)
 }
+
+// StaticTokenSource is a token source that provides a fixed,
+// static token.
+type StaticTokenSource struct {
+	T string
+}
+
+// Token always returns the fixed, static token T.
+func (s *StaticTokenSource) Token(ctx context.Context) (string, error) {
+	return s.T, nil
+}
