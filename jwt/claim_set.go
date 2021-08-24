@@ -17,6 +17,10 @@ package jwt
 
 import (
 	"encoding/json"
+	"strings"
+
+	"shanhu.io/misc/errcode"
+	"shanhu.io/misc/strutil"
 )
 
 // ClaimSet contains the JWT claims
@@ -101,4 +105,40 @@ func decodeClaimSet(s string) (*ClaimSet, error) {
 		c.Extra = m
 	}
 	return c, nil
+}
+
+// CheckClaimSet checks claims in claim set, see if it matches the values
+// in the template.
+func CheckClaimSet(claims, tmpl *ClaimSet) error {
+	if tmpl.Iss != "" {
+		if claims.Iss != tmpl.Iss {
+			return errcode.Unauthorizedf("wrong issuer")
+		}
+	}
+	if tmpl.Aud != "" {
+		if claims.Aud != tmpl.Aud {
+			return errcode.Unauthorizedf("wrong audiance")
+		}
+	}
+	if tmpl.Typ != "" {
+		if claims.Typ != tmpl.Typ {
+			return errcode.Unauthorizedf("wrong type")
+		}
+	}
+	if tmpl.Sub != "" {
+		if claims.Sub != tmpl.Sub {
+			return errcode.Unauthorizedf("wrong subject")
+		}
+	}
+	if tmpl.Scope != "" {
+		tmplScopes := strings.Fields(tmpl.Scope)
+		claimScopesSet := strutil.MakeSet(strings.Fields(claims.Scope))
+		for _, s := range tmplScopes {
+			if _, ok := claimScopesSet[s]; !ok {
+				return errcode.Unauthorizedf("scope %q missing", s)
+			}
+		}
+	}
+
+	return nil
 }
