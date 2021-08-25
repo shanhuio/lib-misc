@@ -22,7 +22,7 @@ import (
 )
 
 func TestDuration(t *testing.T) {
-	for _, d := range []time.Duration {
+	for _, d := range []time.Duration{
 		time.Duration(0),
 		time.Nanosecond,
 		time.Second,
