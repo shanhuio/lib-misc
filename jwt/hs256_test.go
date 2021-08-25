@@ -41,16 +41,12 @@ func TestHS256(t *testing.T) {
 	}
 	t.Log(tokStr)
 
-	tok, err := DecodeAndVerify(tokStr, h)
+	tok, err := DecodeAndVerify(tokStr, h, now)
 	if err != nil {
 		t.Fatal("decode: ", err)
 	}
 
 	if got, want := tok.ClaimSet.Iss, c.Iss; got != want {
 		t.Errorf("got issuer %q, want %q", got, want)
-	}
-
-	if _, err := CheckTime(tok.ClaimSet, now); err != nil {
-		t.Errorf("check time: %s", err)
 	}
 }

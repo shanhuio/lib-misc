@@ -18,6 +18,7 @@ package jwt
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"time"
 
 	"shanhu.io/misc/errcode"
 )
@@ -59,7 +60,7 @@ func (h *HS256) Sign(_ *Header, data []byte) ([]byte, error) {
 }
 
 // Verify verifies the HS256 signature.
-func (h *HS256) Verify(header *Header, data, sig []byte) error {
+func (h *HS256) Verify(header *Header, data, sig []byte, _ time.Time) error {
 	if err := checkHeader(header, h.header); err != nil {
 		return err
 	}

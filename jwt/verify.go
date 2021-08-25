@@ -17,13 +17,14 @@ package jwt
 
 import (
 	"strings"
+	"time"
 
 	"shanhu.io/misc/errcode"
 )
 
 // Verifier verifies the token.
 type Verifier interface {
-	Verify(h *Header, data, sig []byte) error
+	Verify(h *Header, data, sig []byte, t time.Time) error
 }
 
 // Token is a parsed JWT token.
@@ -34,7 +35,7 @@ type Token struct {
 }
 
 // DecodeAndVerify decodes and verifies a token.
-func DecodeAndVerify(token string, v Verifier) (*Token, error) {
+func DecodeAndVerify(token string, v Verifier, t time.Time) (*Token, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return nil, errcode.InvalidArgf(
@@ -55,7 +56,7 @@ func DecodeAndVerify(token string, v Verifier) (*Token, error) {
 	}
 
 	if v != nil {
-		if err := v.Verify(header, payload, sigBytes); err != nil {
+		if err := v.Verify(header, payload, sigBytes, t); err != nil {
 			return nil, errcode.Annotate(err, "verify signature")
 		}
 	}
@@ -63,6 +64,9 @@ func DecodeAndVerify(token string, v Verifier) (*Token, error) {
 	claims, err := decodeClaimSet(c)
 	if err != nil {
 		return nil, errcode.InvalidArgf("decode claims: %s", err)
+	}
+	if _, err := CheckTime(claims, t); err != nil {
+		return nil, err
 	}
 
 	return &Token{
@@ -73,6 +77,6 @@ func DecodeAndVerify(token string, v Verifier) (*Token, error) {
 }
 
 // Decode decodes the token without verifying it.
-func Decode(token string) (*Token, error) {
-	return DecodeAndVerify(token, nil)
+func Decode(token string, t time.Time) (*Token, error) {
+	return DecodeAndVerify(token, nil, t)
 }
