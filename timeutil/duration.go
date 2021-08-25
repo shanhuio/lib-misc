@@ -51,3 +51,12 @@ func (d *Duration) Duration() time.Duration {
 	nano := time.Duration(d.Nano) * time.Nanosecond
 	return sec + nano
 }
+
+// TimeDuration converts d to time.Duration. If d is nil, 0 duration is
+// returned.
+func TimeDuration(d *Duration) time.Duration {
+	if d == nil {
+		return time.Duration(0)
+	}
+	return d.Duration()
+}
