@@ -44,3 +44,12 @@ func NewTimestamp(t time.Time) *Timestamp {
 func TimestampNow() *Timestamp {
 	return NewTimestamp(time.Now())
 }
+
+// Time converts timestamp to time.Time .
+func Time(ts *Timestamp) time.Time {
+	if ts == nil {
+		var zero time.Time
+		return zero
+	}
+	return ts.Time()
+}

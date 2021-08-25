@@ -38,7 +38,7 @@ type Duration struct {
 
 // NewDuration creates a new duration of d.
 func NewDuration(d time.Duration) *Duration {
-	nano, sec := secNano(d.Nanoseconds())
+	sec, nano := secNano(d.Nanoseconds())
 	return &Duration{
 		Sec:  sec,
 		Nano: nano,
