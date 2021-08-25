@@ -35,4 +35,9 @@ func TestDuration(t *testing.T) {
 			t.Errorf("cycling duration %s got %s", d, d2)
 		}
 	}
+
+	got := TimeDuration(nil)
+	if got != time.Duration(0) {
+		t.Errorf("want 0 duration, got %s", got)
+	}
 }
