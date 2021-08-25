@@ -110,6 +110,12 @@ func decodeClaimSet(s string) (*ClaimSet, error) {
 // CheckClaimSet checks claims in claim set, see if it matches the values
 // in the template.
 func CheckClaimSet(claims, tmpl *ClaimSet) error {
+	if claims == nil {
+		return errcode.Unauthorizedf("claims missing")
+	}
+	if tmpl == nil { // nothing to check.
+		return nil
+	}
 	if tmpl.Iss != "" {
 		if claims.Iss != tmpl.Iss {
 			return errcode.Unauthorizedf("wrong issuer")
