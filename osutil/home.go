@@ -54,3 +54,6 @@ func (h *Home) FilePath(p string) string {
 	}
 	return filepath.Join(h.dir, filepath.FromSlash(p))
 }
+
+// Dir returns the base directory, it is always in its absolute form.
+func (h *Home) Dir() string { return h.dir }
