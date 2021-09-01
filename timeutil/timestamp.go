@@ -59,3 +59,11 @@ func Time(ts *Timestamp) time.Time {
 	}
 	return ts.Time()
 }
+
+// CopyTimestamp copies a timestamp.
+func CopyTimestamp(ts *Timestamp) *Timestamp {
+	if ts == nil {
+		return nil
+	}
+	return ts.Clone()
+}
