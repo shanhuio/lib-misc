@@ -31,6 +31,7 @@ type Verifier interface {
 type Token struct {
 	Header    *Header
 	ClaimSet  *ClaimSet
+	Payload   []byte
 	Signature []byte
 }
 
@@ -54,26 +55,37 @@ func DecodeAndVerify(token string, v Verifier, t time.Time) (*Token, error) {
 	if err != nil {
 		return nil, errcode.InvalidArgf("decode signature: %s", err)
 	}
-
-	if v != nil {
-		if err := v.Verify(header, payload, sigBytes, t); err != nil {
-			return nil, errcode.Annotate(err, "verify signature")
-		}
-	}
-
 	claims, err := decodeClaimSet(c)
 	if err != nil {
 		return nil, errcode.InvalidArgf("decode claims: %s", err)
 	}
-	if _, err := CheckTime(claims, t); err != nil {
+
+	decoded := &Token{
+		Header:    header,
+		ClaimSet:  claims,
+		Payload:   payload,
+		Signature: sigBytes,
+	}
+
+	if err := Verify(decoded, v, t); err != nil {
 		return nil, err
 	}
 
-	return &Token{
-		Header:    header,
-		ClaimSet:  claims,
-		Signature: sigBytes,
-	}, nil
+	return decoded, nil
+}
+
+// Verify verifies if a decoded token has the valid signature.
+func Verify(tok *Token, v Verifier, t time.Time) error {
+	if v != nil {
+		if err := v.Verify(
+			tok.Header, tok.Payload, tok.Signature, t,
+		); err != nil {
+			return errcode.Annotate(err, "verify signature")
+		}
+	}
+
+	_, err := CheckTime(tok.ClaimSet, t)
+	return err
 }
 
 // Decode decodes the token without verifying it.
