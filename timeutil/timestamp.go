@@ -31,6 +31,12 @@ func (t *Timestamp) Time() time.Time {
 	return time.Unix(t.Sec, t.Nano).UTC()
 }
 
+// Clone clones the timestamp.
+func (t *Timestamp) Clone() *Timestamp {
+	cp := *t
+	return &cp
+}
+
 // NewTimestamp creates a new timestamp from the given time.
 func NewTimestamp(t time.Time) *Timestamp {
 	sec, nano := secNano(t.UnixNano())
@@ -52,4 +58,12 @@ func Time(ts *Timestamp) time.Time {
 		return zero
 	}
 	return ts.Time()
+}
+
+// CopyTimestamp copies a timestamp.
+func CopyTimestamp(ts *Timestamp) *Timestamp {
+	if ts == nil {
+		return nil
+	}
+	return ts.Clone()
 }
