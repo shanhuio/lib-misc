@@ -31,4 +31,10 @@ func TestTimestamp(t *testing.T) {
 			now, nanos, nanos2,
 		)
 	}
+
+	got := Time(nil)
+	var zeroTime time.Time
+	if !got.Equal(zeroTime) {
+		t.Errorf("nil timestamp got %q", got)
+	}
 }
