@@ -41,30 +41,21 @@ type Client struct {
 }
 
 func (c *Client) addAuth(req *http.Request) error {
-	if c.TokenSource != nil {
-		ctx := req.Context()
-		tok, err := c.TokenSource.Token(ctx)
-		if err != nil {
-			return err
-		}
-		SetAuthToken(req.Header, tok)
+	if c.TokenSource == nil {
+		SetAuthToken(req.Header, c.Token)
 		return nil
 	}
-	SetAuthToken(req.Header, c.Token)
+	ctx := req.Context()
+	tok, err := c.TokenSource.Token(ctx)
+	if err != nil {
+		return err
+	}
+	SetAuthToken(req.Header, tok)
 	return nil
 }
 
-func (c *Client) addHeaders(h http.Header) {
-	setHeader(h, "User-Agent", c.UserAgent)
-	setHeader(h, "Accept", c.Accept)
-}
-
-func (c *Client) makeClient() *http.Client {
-	return &http.Client{Transport: c.Transport}
-}
-
 func (c *Client) doRaw(req *http.Request) (*http.Response, error) {
-	return c.makeClient().Do(req)
+	return (&http.Client{Transport: c.Transport}).Do(req)
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
@@ -92,7 +83,8 @@ func (c *Client) req(m, p string, r io.Reader) (*http.Request, error) {
 	if err := c.addAuth(req); err != nil {
 		return nil, err
 	}
-	c.addHeaders(req.Header)
+	setHeader(req.Header, "User-Agent", c.UserAgent)
+	setHeader(req.Header, "Accept", c.Accept)
 	return req, nil
 }
 
@@ -171,9 +163,7 @@ func (c *Client) GetCode(p string) (int, error) {
 }
 
 // Poke posts a signal to the given route on the server.
-func (c *Client) Poke(p string) error {
-	return c.poke(http.MethodPost, p)
-}
+func (c *Client) Poke(p string) error { return c.poke(http.MethodPost, p) }
 
 // Get gets a response from a route on the server.
 func (c *Client) Get(p string) (*http.Response, error) {
