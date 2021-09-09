@@ -17,6 +17,7 @@ package httputil
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -54,12 +55,16 @@ func (c *Client) addAuth(req *http.Request) error {
 	return nil
 }
 
-func (c *Client) doRaw(req *http.Request) (*http.Response, error) {
-	return (&http.Client{Transport: c.Transport}).Do(req)
+func (c *Client) doRaw(ctx context.Context, req *http.Request) (
+	*http.Response, error,
+) {
+	return (&http.Client{Transport: c.Transport}).Do(req.WithContext(ctx))
 }
 
-func (c *Client) do(req *http.Request) (*http.Response, error) {
-	resp, err := c.doRaw(req)
+func (c *Client) do(ctx context.Context, req *http.Request) (
+	*http.Response, error,
+) {
+	resp, err := c.doRaw(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +118,7 @@ func (c *Client) PutN(p string, r io.Reader, n int64) error {
 		req.ContentLength = n
 	}
 
-	resp, err := c.do(req)
+	resp, err := c.do(context.TODO(), req)
 	if err != nil {
 		return err
 	}
@@ -134,12 +139,12 @@ func (c *Client) JSONPut(p string, v interface{}) error {
 	return c.PutBytes(p, bs)
 }
 
-func (c *Client) poke(m, p string) error {
+func (c *Client) poke(ctx context.Context, m, p string) error {
 	req, err := c.req(m, p, nil)
 	if err != nil {
 		return err
 	}
-	resp, err := c.do(req)
+	resp, err := c.do(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -153,7 +158,7 @@ func (c *Client) GetCode(p string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	resp, err := c.doRaw(req)
+	resp, err := c.doRaw(context.TODO(), req)
 	if err != nil {
 		return 0, err
 	}
@@ -163,7 +168,9 @@ func (c *Client) GetCode(p string) (int, error) {
 }
 
 // Poke posts a signal to the given route on the server.
-func (c *Client) Poke(p string) error { return c.poke(http.MethodPost, p) }
+func (c *Client) Poke(p string) error {
+	return c.poke(context.TODO(), http.MethodPost, p)
+}
 
 // Get gets a response from a route on the server.
 func (c *Client) Get(p string) (*http.Response, error) {
@@ -171,7 +178,7 @@ func (c *Client) Get(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.do(req)
+	return c.do(context.TODO(), req)
 }
 
 // GetString gets the string response from a route on the server.
@@ -212,7 +219,7 @@ func (c *Client) JSONGet(p string, resp interface{}) error {
 	if err != nil {
 		return nil
 	}
-	httpResp, err := c.do(req)
+	httpResp, err := c.do(context.TODO(), req)
 	if err != nil {
 		return err
 	}
@@ -235,14 +242,16 @@ func (c *Client) Post(p string, r io.Reader, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	resp, err := c.do(req)
+	resp, err := c.do(context.TODO(), req)
 	if err != nil {
 		return err
 	}
 	return copyRespBody(resp, w)
 }
 
-func (c *Client) jsonPost(p string, req interface{}) (*http.Response, error) {
+func (c *Client) jsonPost(ctx context.Context, p string, req interface{}) (
+	*http.Response, error,
+) {
 	bs, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -251,13 +260,13 @@ func (c *Client) jsonPost(p string, req interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.do(httpReq)
+	return c.do(ctx, httpReq)
 }
 
 // JSONPost posts a JSON object as the request body and writes the body
 // into the given writer.
 func (c *Client) JSONPost(p string, req interface{}, w io.Writer) error {
-	resp, err := c.jsonPost(p, req)
+	resp, err := c.jsonPost(context.TODO(), p, req)
 	if err != nil {
 		return err
 	}
@@ -267,7 +276,7 @@ func (c *Client) JSONPost(p string, req interface{}, w io.Writer) error {
 // JSONCall performs a call with the request as a marshalled JSON object,
 // and the response unmarhsalled as a JSON object.
 func (c *Client) JSONCall(p string, req, resp interface{}) error {
-	httpResp, err := c.jsonPost(p, req)
+	httpResp, err := c.jsonPost(context.TODO(), p, req)
 	if err != nil {
 		return err
 	}
@@ -290,5 +299,5 @@ func (c *Client) Call(p string, req, resp interface{}) error {
 
 // Delete sends a delete message to the particular path.
 func (c *Client) Delete(p string) error {
-	return c.poke(http.MethodDelete, p)
+	return c.poke(context.TODO(), http.MethodDelete, p)
 }
