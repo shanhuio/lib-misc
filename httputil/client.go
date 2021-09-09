@@ -273,10 +273,12 @@ func (c *Client) JSONPost(p string, req interface{}, w io.Writer) error {
 	return copyRespBody(resp, w)
 }
 
-// JSONCall performs a call with the request as a marshalled JSON object,
-// and the response unmarhsalled as a JSON object.
-func (c *Client) JSONCall(p string, req, resp interface{}) error {
-	httpResp, err := c.jsonPost(context.TODO(), p, req)
+// CallContext performs a call with the request as a marshalled JSON object,
+// and the response unmarshalled as a JSON object.
+func (c *Client) CallContext(
+	ctx context.Context, p string, req, resp interface{},
+) error {
+	httpResp, err := c.jsonPost(ctx, p, req)
 	if err != nil {
 		return err
 	}
@@ -292,9 +294,14 @@ func (c *Client) JSONCall(p string, req, resp interface{}) error {
 	return httpResp.Body.Close()
 }
 
-// Call is an alias to JSONCall.
+// Call performs a CallContext with context.TODO().
 func (c *Client) Call(p string, req, resp interface{}) error {
-	return c.JSONCall(p, req, resp)
+	return c.CallContext(context.TODO(), p, req, resp)
+}
+
+// JSONCall is an alias to Call.
+func (c *Client) JSONCall(p string, req, resp interface{}) error {
+	return c.Call(p, req, resp)
 }
 
 // Delete sends a delete message to the particular path.
