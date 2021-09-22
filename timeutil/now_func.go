@@ -35,3 +35,9 @@ func ReadTime(f func() time.Time) time.Time {
 	}
 	return f()
 }
+
+// ReadTimestamp runs the function and returns the time as a Timestamp,
+// or return the result of time.Now() as a timestamp.
+func ReadTimestamp(f func() time.Time) *Timestamp {
+	return NewTimestamp(ReadTime(f))
+}
