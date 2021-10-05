@@ -110,13 +110,13 @@ func (g *getter) get(hello *tls.ClientHelloInfo) (
 	return cert, nil
 }
 
-// WrapAutoCertCertFunc wraps the GetCertificate function from an
+// WrapAutoCert wraps the GetCertificate function from an
 // *autocert.Manager. The resulting function adds a small delay of several
 // seconds for the first time a certificate is requested, so that newly
 // issued certificates won't be rejected upright by strict browsers on failed
 // SCT timestamps checking due to clock skews. Optinally, a map of manual
 // certificates can be used for a set of domains.
-func WrapAutoCertCertFunc(
+func WrapAutoCert(
 	f GetFunc, manualCerts map[string]*tls.Certificate,
 ) GetFunc {
 	g := newGetter(f, manualCerts)
