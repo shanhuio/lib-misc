@@ -27,14 +27,6 @@ type Verifier interface {
 	Verify(h *Header, data, sig []byte, t time.Time) error
 }
 
-// Token is a parsed JWT token.
-type Token struct {
-	Header    *Header
-	ClaimSet  *ClaimSet
-	Payload   []byte
-	Signature []byte
-}
-
 // DecodeAndVerify decodes and verifies a token.
 func DecodeAndVerify(token string, v Verifier, t time.Time) (*Token, error) {
 	decoded, err := Decode(token)
