@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 
 	"golang.org/x/crypto/ssh"
+	"shanhu.io/misc/osutil"
 )
 
 var (
@@ -50,7 +51,7 @@ func ParsePrivateKey(bs []byte) (*rsa.PrivateKey, error) {
 
 // ParsePrivateKeyFile parses the PEM encded RSA private key file.
 func ParsePrivateKeyFile(f string) (*rsa.PrivateKey, error) {
-	bs, err := ioutil.ReadFile(f)
+	bs, err := osutil.ReadPrivateFile(f)
 	if err != nil {
 		return nil, err
 	}
