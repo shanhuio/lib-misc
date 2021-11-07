@@ -19,16 +19,18 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
+	"fmt"
 	"io/ioutil"
 
 	"golang.org/x/crypto/ssh"
+	"shanhu.io/misc/errcode"
 	"shanhu.io/misc/osutil"
+	"shanhu.io/misc/termutil"
 )
 
 var (
-	errNotRSA = errors.New("public key is not an RSA key")
-	errNoKey  = errors.New("no key")
+	errNotRSA = errcode.InvalidArgf("public key is not an RSA key")
+	errNoKey  = errcode.InvalidArgf("no key")
 )
 
 // ParsePrivateKey parses the PEM encoded RSA private key.
@@ -39,13 +41,11 @@ func ParsePrivateKey(bs []byte) (*rsa.PrivateKey, error) {
 
 	b, _ := pem.Decode(bs)
 	if b == nil {
-		return nil, errors.New("pem decode failed")
+		return nil, errcode.InvalidArgf("pem decode failed")
 	}
-
 	if x509.IsEncryptedPEMBlock(b) {
-		return nil, errors.New("key is encrypted")
+		return nil, errcode.InvalidArgf("key is encrypted")
 	}
-
 	return x509.ParsePKCS1PrivateKey(b.Bytes)
 }
 
@@ -92,4 +92,39 @@ func ParsePublicKeyFile(f string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 	return ParsePublicKey(bs)
+}
+
+// ParsePrivateKeyTTY parses a private key and asks for the passphrase
+// if the key is an encrypted PEM.
+func ParsePrivateKeyTTY(name string, bs []byte) (
+	*rsa.PrivateKey, error,
+) {
+	b, _ := pem.Decode(bs)
+	if b == nil {
+		return nil, errcode.InvalidArgf("%q decode failed", name)
+	}
+
+	if !x509.IsEncryptedPEMBlock(b) {
+		return x509.ParsePKCS1PrivateKey(b.Bytes)
+	}
+
+	prompt := fmt.Sprintf("Passphrase for %s: ", name)
+	pwd, err := termutil.ReadPassword(prompt)
+	if err != nil {
+		return nil, err
+	}
+	der, err := x509.DecryptPEMBlock(b, pwd)
+	if err != nil {
+		return nil, err
+	}
+	return x509.ParsePKCS1PrivateKey(der)
+}
+
+// ReadPrivateKeyTTY reads a private key from a key file.
+func ReadPrivateKeyTTY(pemFile string) (*rsa.PrivateKey, error) {
+	bs, err := osutil.ReadPrivateFile(pemFile)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePrivateKeyTTY(pemFile, bs)
 }
