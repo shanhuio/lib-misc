@@ -24,7 +24,7 @@ import (
 	"reflect"
 )
 
-func TestParseKey(t *testing.T) {
+func TestReadKey(t *testing.T) {
 	tmp, err := os.MkdirTemp("", "rsautil")
 	if err != nil {
 		t.Fatal(err)
@@ -43,11 +43,11 @@ func TestParseKey(t *testing.T) {
 		t.Fatal("create test key file: ", err)
 	}
 
-	privateKey, err := ParsePrivateKeyFile(privateKeyFile)
+	privateKey, err := ReadPrivateKey(privateKeyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	publicKey, err := ParsePublicKeyFile("testdata/test.pub")
+	publicKey, err := ReadPublicKey("testdata/test.pub")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -49,8 +49,8 @@ func ParsePrivateKey(bs []byte) (*rsa.PrivateKey, error) {
 	return x509.ParsePKCS1PrivateKey(b.Bytes)
 }
 
-// ParsePrivateKeyFile parses the PEM encded RSA private key file.
-func ParsePrivateKeyFile(f string) (*rsa.PrivateKey, error) {
+// ReadPrivateKey parses the PEM encded RSA private key file.
+func ReadPrivateKey(f string) (*rsa.PrivateKey, error) {
 	bs, err := osutil.ReadPrivateFile(f)
 	if err != nil {
 		return nil, err
@@ -84,9 +84,9 @@ func ParsePublicKey(bs []byte) (*rsa.PublicKey, error) {
 	return ret, nil
 }
 
-// ParsePublicKeyFile parses a marshalled public key file in SSH authorized key
+// ReadPublicKey parses a marshalled public key file in SSH authorized key
 // file format.
-func ParsePublicKeyFile(f string) (*rsa.PublicKey, error) {
+func ReadPublicKey(f string) (*rsa.PublicKey, error) {
 	bs, err := ioutil.ReadFile(f)
 	if err != nil {
 		return nil, err
