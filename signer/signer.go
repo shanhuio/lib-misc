@@ -21,8 +21,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
+	"time"
 
+	"shanhu.io/misc/errcode"
 	"shanhu.io/misc/rand"
+	"shanhu.io/misc/timeutil"
 )
 
 // Signer is a signer that contains a secrect key.
@@ -127,4 +131,37 @@ func (s *Signer) CheckHex(str string) (bool, []byte) {
 		return false, nil
 	}
 	return s.Check(bs)
+}
+
+// NewSignedChallenge creates a new signed challenge.
+func (s *Signer) NewSignedChallenge(t time.Time, rand io.Reader) (
+	[]byte, *timeutil.Challenge, error,
+) {
+	ch, err := timeutil.NewChallenge(t, rand)
+	if err != nil {
+		return nil, nil, err
+	}
+	signed, err := s.SignJSON(ch)
+	if err != nil {
+		return nil, nil, err
+	}
+	return signed, ch, nil
+}
+
+// CheckChallenge checks if a challenge is properly signed and if the time
+// is after mustAfter.
+func (s *Signer) CheckChallenge(bs []byte, mustAfter time.Time) (
+	*timeutil.Challenge, error,
+) {
+	ch := new(timeutil.Challenge)
+	ok, err := s.CheckJSON(bs, ch)
+	if !ok {
+		return nil, errcode.Annotate(err, "invalid challenge")
+	}
+
+	t := timeutil.Time(ch.T)
+	if t.Before(mustAfter) {
+		return nil, errcode.InvalidArgf("challenge too old")
+	}
+	return ch, nil
 }
