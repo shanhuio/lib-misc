@@ -3,7 +3,6 @@ module shanhu.io/misc
 go 1.16
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/microcosm-cc/bluemonday v1.0.16
 	github.com/russross/blackfriday v1.6.0
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
