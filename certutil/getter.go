@@ -22,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"shanhu.io/misc/timeutil"
 )
 
 type timeEntry struct {
@@ -35,6 +37,7 @@ type GetFunc func(hello *tls.ClientHelloInfo) (*tls.Certificate, error)
 
 type getter struct {
 	getFunc GetFunc
+	now     func() time.Time
 
 	mu          sync.Mutex
 	certs       map[string]*timeEntry
@@ -42,20 +45,28 @@ type getter struct {
 	nextCleanUp time.Time
 }
 
-func newGetter(f GetFunc, manual map[string]*tls.Certificate) *getter {
+type getterConfig struct {
+	getFunc     GetFunc
+	manualCerts map[string]*tls.Certificate
+	now         func() time.Time
+}
+
+func newGetter(config *getterConfig) *getter {
+	now := timeutil.NowFunc(config.now)
 	return &getter{
-		getFunc:     f,
+		getFunc:     config.getFunc,
+		now:         now,
 		certs:       make(map[string]*timeEntry),
-		nextCleanUp: time.Now().Add(time.Hour),
-		manual:      manual,
+		nextCleanUp: now().Add(time.Hour),
+		manual:      config.manualCerts,
 	}
 }
 
 func (g *getter) delay(cert *x509.Certificate) {
-	now := time.Now()
+	now := g.now()
 	if cert.NotBefore.Before(now.Add(-2 * time.Hour)) {
-		// cert valid start time is more than 2 hours ago.
-		// this is not likely a new certificate.
+		// If the cert's start time is more than 2 hours ago, then this is not
+		// likely a new certificate.
 		return
 	}
 
@@ -119,6 +130,9 @@ func (g *getter) get(hello *tls.ClientHelloInfo) (
 func WrapAutoCert(
 	f GetFunc, manualCerts map[string]*tls.Certificate,
 ) GetFunc {
-	g := newGetter(f, manualCerts)
+	g := newGetter(&getterConfig{
+		getFunc:     f,
+		manualCerts: manualCerts,
+	})
 	return g.get
 }
