@@ -72,6 +72,21 @@ func TestTrie(t *testing.T) {
 		if r != test.output {
 			t.Errorf("find %q, want %q, got %q", test.input, test.output, r)
 		}
+
+		if test.input == test.output {
+			parts := pathSplit(test.input)
+			v := tr.FindExact(parts)
+			if v != test.output {
+				t.Errorf(
+					"FindExact %q, want %q, got %q",
+					test.input, test.output, v,
+				)
+			}
+		} else {
+			if v := tr.FindExact(pathSplit(test.input)); v != "" {
+				t.Errorf("FindExact %q, want empty, got %q", test.input, v)
+			}
+		}
 	}
 
 	for _, p := range []string{
