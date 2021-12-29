@@ -9,7 +9,7 @@ require (
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/tools v0.1.8
-	shanhu.io/text v0.0.0-20210719201909-537e563f9279
+	shanhu.io/text v0.0.0-20211223054527-6b1ed066cd84
 )
 
 require (
