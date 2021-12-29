@@ -27,8 +27,8 @@ import (
 )
 
 type timeEntry struct {
-	firstSeen time.Time
-	expire    time.Time
+	mature time.Time // After this time, no delay will be applied.
+	expire time.Time // After this time, will be cleaned up.
 }
 
 // GetFunc is the function that gets TLS certificate based on the
@@ -38,67 +38,117 @@ type GetFunc func(hello *tls.ClientHelloInfo) (*tls.Certificate, error)
 type getter struct {
 	getFunc GetFunc
 	now     func() time.Time
+	sleep   func(d time.Duration)
 
-	mu          sync.Mutex
-	certs       map[string]*timeEntry
-	manual      map[string]*tls.Certificate
-	nextCleanUp time.Time
+	mu     sync.Mutex
+	certs  map[string]*timeEntry
+	manual map[string]*tls.Certificate
+
+	cleanUpTimerMu sync.Mutex
+	nextCleanUp    time.Time
+	cleanUpPeriod  time.Duration
 }
 
 type getterConfig struct {
 	getFunc     GetFunc
 	manualCerts map[string]*tls.Certificate
 	now         func() time.Time
+	sleep       func(d time.Duration)
 }
 
 func newGetter(config *getterConfig) *getter {
 	now := timeutil.NowFunc(config.now)
+	sleep := config.sleep
+	if sleep == nil {
+		sleep = time.Sleep
+	}
+
+	const cleanUpPeriod = time.Hour
+
 	return &getter{
-		getFunc:     config.getFunc,
-		now:         now,
-		certs:       make(map[string]*timeEntry),
-		nextCleanUp: now().Add(time.Hour),
-		manual:      config.manualCerts,
+		getFunc: config.getFunc,
+		now:     now,
+		sleep:   sleep,
+
+		certs:         make(map[string]*timeEntry),
+		nextCleanUp:   now().Add(cleanUpPeriod),
+		cleanUpPeriod: cleanUpPeriod,
+		manual:        config.manualCerts,
 	}
 }
 
-func (g *getter) delay(cert *x509.Certificate) {
+func (g *getter) checkCleanUp() {
 	now := g.now()
-	if cert.NotBefore.Before(now.Add(-2 * time.Hour)) {
-		// If the cert's start time is more than 2 hours ago, then this is not
-		// likely a new certificate.
-		return
-	}
 
+	g.cleanUpTimerMu.Lock()
+	defer g.cleanUpTimerMu.Unlock()
+
+	if g.nextCleanUp.Before(now) {
+		g.nextCleanUp = now.Add(g.cleanUpPeriod)
+		go g.cleanup()
+	}
+}
+
+func (g *getter) cleanup() {
+	now := g.now()
+
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	var toDelete []string
+	for k, v := range g.certs {
+		if now.After(v.expire) {
+			toDelete = append(toDelete, k)
+		}
+	}
+	for _, k := range toDelete {
+		delete(g.certs, k)
+	}
+}
+
+func (g *getter) delayUnlessMature(cert *x509.Certificate, now time.Time) {
+	// We use the SerialNumber as the key here. This assumes that all the
+	// certificates are issued by the same issuer, and the issuer uses
+	// unique serial numbers for certificates.
 	k := fmt.Sprintf("%x", cert.SerialNumber)
 
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	const delay = 2 * time.Second
+	const (
+		// Delay the return of the certificate this amount of time if the
+		// certificate is new.
+		delay = 2 * time.Second
+
+		// After this amount of time, do not delay anymore.
+		mature = 3 * time.Second
+	)
+
 	entry, ok := g.certs[k]
 	if !ok {
-		time.Sleep(delay)
+		g.sleep(delay)
 		g.certs[k] = &timeEntry{
-			firstSeen: now,
-			expire:    cert.NotAfter,
+			mature: now.Add(mature),
+			expire: cert.NotAfter,
 		}
-	} else if now.Before(entry.firstSeen.Add(3 * time.Second)) {
-		time.Sleep(delay)
+	} else if now.Before(entry.mature) {
+		g.sleep(delay)
+	}
+}
+
+func (g *getter) maybeDelay(cert *x509.Certificate) {
+	now := g.now()
+	const oldCertDuration = 2 * time.Hour
+	if cert.NotBefore.Before(now.Add(-oldCertDuration)) {
+		// If the cert's start time is more than oldCertDuration, then this is
+		// not likely a new certificate.
+		return
 	}
 
-	if now.After(g.nextCleanUp) {
-		var toDelete []string
-		for k, v := range g.certs {
-			if now.After(v.expire) {
-				toDelete = append(toDelete, k)
-			}
-		}
-		for _, k := range toDelete {
-			delete(g.certs, k)
-		}
-		g.nextCleanUp = now.Add(time.Hour)
-	}
+	// Now, we will check the if the certificate is "mature", and delay for
+	// some time.
+	g.delayUnlessMature(cert, now)
+	g.checkCleanUp()
 }
 
 func (g *getter) get(hello *tls.ClientHelloInfo) (
@@ -116,7 +166,7 @@ func (g *getter) get(hello *tls.ClientHelloInfo) (
 		return cert, err
 	}
 	if cert.Leaf != nil {
-		g.delay(cert.Leaf)
+		g.maybeDelay(cert.Leaf)
 	}
 	return cert, nil
 }
