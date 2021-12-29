@@ -52,8 +52,9 @@ type getter struct {
 type getterConfig struct {
 	getFunc     GetFunc
 	manualCerts map[string]*tls.Certificate
-	now         func() time.Time
-	sleep       func(d time.Duration)
+
+	now   func() time.Time
+	sleep func(d time.Duration)
 }
 
 func newGetter(config *getterConfig) *getter {
