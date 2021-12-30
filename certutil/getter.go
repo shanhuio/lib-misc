@@ -72,7 +72,7 @@ func newGetter(config *getterConfig) *getter {
 		certs:  make(map[string]*timeEntry),
 		manual: config.manualCerts,
 
-		cleanUpTimer: newTimer(cleanUpPeriod, now()),
+		cleanUpTimer: newTimer(cleanUpPeriod, now().Add(cleanUpPeriod)),
 	}
 }
 

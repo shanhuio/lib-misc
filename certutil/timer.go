@@ -26,9 +26,9 @@ type timer struct {
 	period time.Duration
 }
 
-func newTimer(period time.Duration, now time.Time) *timer {
+func newTimer(period time.Duration, first time.Time) *timer {
 	return &timer{
-		next:   now.Add(period),
+		next:   first,
 		period: period,
 	}
 }
