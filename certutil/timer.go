@@ -33,6 +33,10 @@ func newTimer(period time.Duration, first time.Time) *timer {
 	}
 }
 
+func newTimerWithNow(period time.Duration, now time.Time) *timer {
+	return newTimer(period, now.Add(period))
+}
+
 func (t *timer) check(now time.Time) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
