@@ -44,9 +44,7 @@ type getter struct {
 	certs  map[string]*timeEntry
 	manual map[string]*tls.Certificate
 
-	cleanUpTimerMu sync.Mutex
-	nextCleanUp    time.Time
-	cleanUpPeriod  time.Duration
+	cleanUpTimer *timer
 }
 
 type getterConfig struct {
@@ -71,26 +69,21 @@ func newGetter(config *getterConfig) *getter {
 		now:     now,
 		sleep:   sleep,
 
-		certs:         make(map[string]*timeEntry),
-		nextCleanUp:   now().Add(cleanUpPeriod),
-		cleanUpPeriod: cleanUpPeriod,
-		manual:        config.manualCerts,
+		certs:  make(map[string]*timeEntry),
+		manual: config.manualCerts,
+
+		cleanUpTimer: newTimer(cleanUpPeriod, now()),
 	}
 }
 
 func (g *getter) checkCleanUp() {
 	now := g.now()
-
-	g.cleanUpTimerMu.Lock()
-	defer g.cleanUpTimerMu.Unlock()
-
-	if g.nextCleanUp.Before(now) {
-		g.nextCleanUp = now.Add(g.cleanUpPeriod)
-		go g.cleanup()
+	if g.cleanUpTimer.check(now) {
+		go g.cleanUp()
 	}
 }
 
-func (g *getter) cleanup() {
+func (g *getter) cleanUp() {
 	now := g.now()
 
 	g.mu.Lock()
