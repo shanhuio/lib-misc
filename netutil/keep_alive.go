@@ -20,14 +20,14 @@ import (
 	"time"
 )
 
-type keepAliveListner struct {
+type keepAliveListener struct {
 	*net.TCPListener
 }
 
-func (ln keepAliveListner) Accept() (c net.Conn, err error) {
+func (ln keepAliveListener) Accept() (c net.Conn, err error) {
 	tc, err := ln.AcceptTCP()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	tc.SetKeepAlive(true)
@@ -42,5 +42,5 @@ func WrapKeepAlive(ln net.Listener) net.Listener {
 	if !ok {
 		return ln
 	}
-	return keepAliveListner{tcpLis}
+	return keepAliveListener{tcpLis}
 }
