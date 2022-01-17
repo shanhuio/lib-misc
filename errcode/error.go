@@ -22,7 +22,7 @@ import (
 // Error is a generic error with a string error code.
 type Error struct {
 	Code  string // code is the type of the error.
-	error        // err is the error message, human friendly.
+	error        // error is the error message, human friendly.
 }
 
 // Common general error codes
