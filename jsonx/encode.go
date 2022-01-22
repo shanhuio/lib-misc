@@ -156,15 +156,3 @@ func encodeValue(w io.Writer, v value) error {
 	}
 	return nil
 }
-
-func encodeTrunk(w io.Writer, t *trunk) error {
-	for _, v := range t.values {
-		if err := encodeValue(w, v); err != nil {
-			return err
-		}
-		if err := writeString(w, "\n"); err != nil {
-			return err
-		}
-	}
-	return nil
-}

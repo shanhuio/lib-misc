@@ -185,13 +185,3 @@ func parseValue(p *parser) value {
 		return nil
 	}
 }
-
-func parseTrunk(p *parser) *trunk {
-	t := &trunk{}
-	for !p.See(tokSemi) {
-		v := parseValue(p)
-		t.values = append(t.values, v)
-	}
-	t.semi = p.Expect(tokSemi)
-	return t
-}

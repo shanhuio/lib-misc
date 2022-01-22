@@ -19,52 +19,17 @@ import (
 	"shanhu.io/text/lexing"
 )
 
-type value interface{}
-
-type null struct {
-	token *lexing.Token
+type typeName struct {
+	tok  *lexing.Token
+	name string
 }
 
-type basic struct {
-	lead  *lexing.Token
-	token *lexing.Token
-	value interface{}
-}
-
-type boolean struct {
-	keyword *lexing.Token
-}
-
-type object struct {
-	left    *lexing.Token
-	entries []*objectEntry
-	right   *lexing.Token
-}
-
-type objectKey struct {
-	token *lexing.Token
-	value interface{}
-}
-
-type objectEntry struct {
-	key   *objectKey
-	colon *lexing.Token
+type typedEntry struct {
+	typ   *typeName
 	value value
-	comma *lexing.Token
+	semi  *lexing.Token
 }
 
-type list struct {
-	left    *lexing.Token
-	entries []*listEntry
-	right   *lexing.Token
-}
-
-type listEntry struct {
-	value value
-	comma *lexing.Token
-}
-
-type identList struct {
-	entries []*lexing.Token
-	dots    []*lexing.Token
+type series struct {
+	entries []*typedEntry
 }

@@ -18,8 +18,10 @@ package jsonx
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 
 	"shanhu.io/misc/errcode"
 	"shanhu.io/text/lexing"
@@ -63,6 +65,58 @@ func (d *Decoder) Decode(v interface{}) []*lexing.Error {
 	return nil
 }
 
+// DecodeSeries decode a typed series.
+func (d *Decoder) DecodeSeries(tm TypeMaker) (
+	[]*Typed, []*lexing.Error,
+) {
+	s := parseSeries(d.p)
+	if errs := d.p.Errs(); errs != nil {
+		return nil, errs
+	}
+
+	var res []*Typed
+
+	errList := lexing.NewErrorList()
+	for _, entry := range s.entries {
+		typ := entry.typ.name
+		v := tm(typ)
+		if v == nil {
+			errList.Add(&lexing.Error{
+				Pos:  entry.typ.tok.Pos,
+				Err:  fmt.Errorf("type %q unknown", typ),
+				Code: "jsonx.unknownType",
+			})
+		}
+
+		bs, errs := marshalValueLexing(entry.value)
+		if errs != nil {
+			errList.AddAll(errs)
+		}
+		if err := json.Unmarshal(bs, v); err != nil {
+			errList.Add(&lexing.Error{
+				Pos:  entry.typ.tok.Pos,
+				Err:  fmt.Errorf("json marshal: %s", err),
+				Code: "jsonx.marshalJSON",
+			})
+		}
+
+		if errList.InJail() {
+			errList.BailOut()
+			continue
+		}
+
+		res = append(res, &Typed{
+			Type: entry.typ.name,
+			V:    v,
+		})
+	}
+
+	if errs := errList.Errs(); errs != nil {
+		return nil, errs
+	}
+	return res, nil
+}
+
 // Unmarshal unmarshals a value into a JSON object. When there is an error on
 // parsing JSONx, v is always unchagned.
 func Unmarshal(bs []byte, v interface{}) error {
@@ -99,4 +153,16 @@ func ReadFileMaybeJSON(file string, v interface{}) error {
 		return err
 	}
 	return nil
+}
+
+// ReadSeriesFile reads a typed series.
+func ReadSeriesFile(file string, tm TypeMaker) ([]*Typed, []*lexing.Error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, lexing.SingleErr(err)
+	}
+	defer f.Close()
+
+	dec := NewDecoder(f)
+	return dec.DecodeSeries(tm)
 }

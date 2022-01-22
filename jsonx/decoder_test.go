@@ -50,3 +50,45 @@ func TestUnmarshal(t *testing.T) {
 		t.Errorf("got %d, want 1234", v)
 	}
 }
+
+func TestDecoder_series(t *testing.T) {
+	input := strings.NewReader(strings.Join([]string{
+		`str "string"`,
+		`num 3`,
+		`struct {Field: "value"}`,
+	}, "\n"))
+
+	type structType struct {
+		Field string
+	}
+
+	dec := NewDecoder(input)
+	tm := func(t string) interface{} {
+		switch t {
+		case "str":
+			return new(string)
+		case "num":
+			return new(int)
+		case "struct":
+			return new(structType)
+		}
+		return nil
+	}
+	list, errs := dec.DecodeSeries(tm)
+	if errs != nil {
+		for _, err := range errs {
+			t.Error(err)
+		}
+	}
+
+	strVal := "string"
+	numVal := 3
+	want := []*Typed{
+		{Type: "str", V: &strVal},
+		{Type: "num", V: &numVal},
+		{Type: "struct", V: &structType{Field: "value"}},
+	}
+	if !reflect.DeepEqual(list, want) {
+		t.Errorf("got %v, want %v", list, want)
+	}
+}

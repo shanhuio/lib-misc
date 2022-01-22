@@ -15,56 +15,11 @@
 
 package jsonx
 
-import (
-	"shanhu.io/text/lexing"
-)
+// TypeMaker is a function that makes an interface based on the given type.
+type TypeMaker func(t string) interface{}
 
-type value interface{}
-
-type null struct {
-	token *lexing.Token
-}
-
-type basic struct {
-	lead  *lexing.Token
-	token *lexing.Token
-	value interface{}
-}
-
-type boolean struct {
-	keyword *lexing.Token
-}
-
-type object struct {
-	left    *lexing.Token
-	entries []*objectEntry
-	right   *lexing.Token
-}
-
-type objectKey struct {
-	token *lexing.Token
-	value interface{}
-}
-
-type objectEntry struct {
-	key   *objectKey
-	colon *lexing.Token
-	value value
-	comma *lexing.Token
-}
-
-type list struct {
-	left    *lexing.Token
-	entries []*listEntry
-	right   *lexing.Token
-}
-
-type listEntry struct {
-	value value
-	comma *lexing.Token
-}
-
-type identList struct {
-	entries []*lexing.Token
-	dots    []*lexing.Token
+// Typed is an item in a typed list.
+type Typed struct {
+	Type string
+	V    interface{}
 }
