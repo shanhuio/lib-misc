@@ -86,10 +86,11 @@ func (d *Decoder) DecodeSeries(tm TypeMaker) (
 	errList := lexing.NewErrorList()
 	for _, entry := range s.entries {
 		typ := entry.typ.name
+		pos := entry.typ.tok.Pos
 		v := tm(typ)
 		if v == nil {
 			errList.Add(&lexing.Error{
-				Pos:  entry.typ.tok.Pos,
+				Pos:  pos,
 				Err:  fmt.Errorf("type %q unknown", typ),
 				Code: "jsonx.unknownType",
 			})
@@ -100,7 +101,7 @@ func (d *Decoder) DecodeSeries(tm TypeMaker) (
 			}
 			if err := json.Unmarshal(bs, v); err != nil {
 				errList.Add(&lexing.Error{
-					Pos:  entry.typ.tok.Pos,
+					Pos:  pos,
 					Err:  fmt.Errorf("json marshal: %s", err),
 					Code: "jsonx.marshalJSON",
 				})
@@ -113,7 +114,8 @@ func (d *Decoder) DecodeSeries(tm TypeMaker) (
 		}
 
 		res = append(res, &Typed{
-			Type: entry.typ.name,
+			Type: typ,
+			Pos:  pos,
 			V:    v,
 		})
 	}

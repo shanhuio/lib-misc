@@ -15,6 +15,10 @@
 
 package jsonx
 
+import (
+	"shanhu.io/text/lexing"
+)
+
 // TypeMaker is a function that makes an interface based on the given type.
 type TypeMaker func(t string) interface{}
 
@@ -22,4 +26,5 @@ type TypeMaker func(t string) interface{}
 type Typed struct {
 	Type string
 	V    interface{}
+	Pos  *lexing.Pos
 }

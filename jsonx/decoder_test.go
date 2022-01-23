@@ -88,7 +88,23 @@ func TestDecoder_series(t *testing.T) {
 		{Type: "num", V: &numVal},
 		{Type: "struct", V: &structType{Field: "value"}},
 	}
-	if !reflect.DeepEqual(list, want) {
-		t.Errorf("got %v, want %v", list, want)
+	if len(list) != len(want) {
+		t.Errorf("got %d entries, want %d", len(list), len(want))
+	} else {
+		for i, got := range list {
+			w := want[i]
+			if got.Type != w.Type {
+				t.Errorf(
+					"entry #%d, got type %q, want %q",
+					i, got.Type, w.Type,
+				)
+			}
+			if !reflect.DeepEqual(got.V, w.V) {
+				t.Errorf(
+					"entry value #%d, got %+v, want %+v",
+					i, got.V, w.V,
+				)
+			}
+		}
 	}
 }
