@@ -32,6 +32,13 @@ type Decoder struct {
 	p *parser
 }
 
+// NewFileDecoder creates a new decoder that can parse a stream of jsonx
+// objects, where name is the filename.
+func NewFileDecoder(name string, r io.Reader) *Decoder {
+	p, _ := newParser("", r)
+	return &Decoder{p: p}
+}
+
 // NewDecoder creates a new decoder that can parse a stream
 // of jsonx objects.
 func NewDecoder(r io.Reader) *Decoder {
@@ -86,18 +93,18 @@ func (d *Decoder) DecodeSeries(tm TypeMaker) (
 				Err:  fmt.Errorf("type %q unknown", typ),
 				Code: "jsonx.unknownType",
 			})
-		}
-
-		bs, errs := marshalValueLexing(entry.value)
-		if errs != nil {
-			errList.AddAll(errs)
-		}
-		if err := json.Unmarshal(bs, v); err != nil {
-			errList.Add(&lexing.Error{
-				Pos:  entry.typ.tok.Pos,
-				Err:  fmt.Errorf("json marshal: %s", err),
-				Code: "jsonx.marshalJSON",
-			})
+		} else {
+			bs, errs := marshalValueLexing(entry.value)
+			if errs != nil {
+				errList.AddAll(errs)
+			}
+			if err := json.Unmarshal(bs, v); err != nil {
+				errList.Add(&lexing.Error{
+					Pos:  entry.typ.tok.Pos,
+					Err:  fmt.Errorf("json marshal: %s", err),
+					Code: "jsonx.marshalJSON",
+				})
+			}
 		}
 
 		if errList.InJail() {
@@ -120,7 +127,11 @@ func (d *Decoder) DecodeSeries(tm TypeMaker) (
 // Unmarshal unmarshals a value into a JSON object. When there is an error on
 // parsing JSONx, v is always unchagned.
 func Unmarshal(bs []byte, v interface{}) error {
-	dec := NewDecoder(bytes.NewReader(bs))
+	return unmarshalFile("", bs, v)
+}
+
+func unmarshalFile(file string, bs []byte, v interface{}) error {
+	dec := NewFileDecoder(file, bytes.NewReader(bs))
 	if errs := dec.Decode(v); errs != nil {
 		return errs[0]
 	}
@@ -136,7 +147,7 @@ func ReadFile(file string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return Unmarshal(bs, v)
+	return unmarshalFile(file, bs, v)
 }
 
 // ReadFileMaybeJSON reads a file that might be JSONx or JSON.
@@ -145,7 +156,7 @@ func ReadFileMaybeJSON(file string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	if err := Unmarshal(bs, v); err != nil {
+	if err := unmarshalFile(file, bs, v); err != nil {
 		// JSONx fails to decode, maybe it is plain JSON?
 		if json.Unmarshal(bs, v) == nil {
 			return nil
@@ -163,6 +174,6 @@ func ReadSeriesFile(file string, tm TypeMaker) ([]*Typed, []*lexing.Error) {
 	}
 	defer f.Close()
 
-	dec := NewDecoder(f)
+	dec := NewFileDecoder(file, f)
 	return dec.DecodeSeries(tm)
 }
