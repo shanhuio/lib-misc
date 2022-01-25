@@ -35,15 +35,14 @@ type Decoder struct {
 // NewFileDecoder creates a new decoder that can parse a stream of jsonx
 // objects, where name is the filename.
 func NewFileDecoder(name string, r io.Reader) *Decoder {
-	p, _ := newParser("", r)
+	p, _ := newParser(name, r)
 	return &Decoder{p: p}
 }
 
 // NewDecoder creates a new decoder that can parse a stream
 // of jsonx objects.
 func NewDecoder(r io.Reader) *Decoder {
-	p, _ := newParser("", r)
-	return &Decoder{p: p}
+	return NewFileDecoder("", r)
 }
 
 // More returns true if there is more stuff.
