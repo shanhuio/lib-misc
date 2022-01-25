@@ -49,6 +49,7 @@ func parseSeries(p *parser) *series {
 	for !p.See(lexing.EOF) {
 		name := parseTypeName(p)
 		if name == nil {
+			p.SkipErrStmt(tokSemi)
 			continue
 		}
 

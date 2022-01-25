@@ -41,6 +41,13 @@ func TestDecoder(t *testing.T) {
 	}
 }
 
+func TestUnmarshal_error(t *testing.T) {
+	var s string
+	if err := Unmarshal([]byte(`"missing`), &s); err == nil {
+		t.Errorf("parse incomplete string passed")
+	}
+}
+
 func TestUnmarshal(t *testing.T) {
 	var v int
 	if err := Unmarshal([]byte("1234"), &v); err != nil {
@@ -105,6 +112,27 @@ func TestDecoder_series(t *testing.T) {
 					i, got.V, w.V,
 				)
 			}
+		}
+	}
+}
+
+func TestDecoder_series_error(t *testing.T) {
+	s := strings.Join([]string{
+		`t {`,
+		`	a:"x/**`,
+		`}`,
+	}, "\n")
+	input := strings.NewReader(s)
+	dec := NewDecoder(input)
+	type structType struct{}
+	tm := func(t string) interface{} {
+		return new(structType)
+	}
+	if _, errs := dec.DecodeSeries(tm); errs == nil {
+		t.Errorf("decode %q got no error", s)
+	} else {
+		for _, err := range errs {
+			t.Log(err)
 		}
 	}
 }
