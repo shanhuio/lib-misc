@@ -13,22 +13,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package bytespool
+package bufpool
 
 import (
 	"sync"
 )
 
-// Pool is a bytes buffer pool that can be used in a http reverse proxy so that
+// Bytes is a bytes buffer pool that can be used in a http reverse proxy so that
 // large transfers won't use up all memory really fast on a machine that does
 // not have a lot of memory.
-type Pool struct {
+type Bytes struct {
 	pool *sync.Pool
 }
 
-// New creates a new bytes buffer pool, where each buffer
+// NewBytes creates a new bytes buffer pool, where each buffer
 // is of bufSize. When bufSize is 0, 32k is used.
-func New(bufSize int) *Pool {
+func NewBytes(bufSize int) *Bytes {
 	if bufSize == 0 {
 		bufSize = 32 * 1024
 	}
@@ -37,11 +37,11 @@ func New(bufSize int) *Pool {
 			return make([]byte, bufSize)
 		},
 	}
-	return &Pool{pool: p}
+	return &Bytes{pool: p}
 }
 
 // Get gets a buffer from the pool.
-func (p *Pool) Get() []byte { return p.pool.Get().([]byte) }
+func (p *Bytes) Get() []byte { return p.pool.Get().([]byte) }
 
 // Put puts the bytes back to the pool.
-func (p *Pool) Put(b []byte) { p.pool.Put(b) }
+func (p *Bytes) Put(b []byte) { p.pool.Put(b) }
