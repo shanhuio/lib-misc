@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"shanhu.io/misc/errcode"
@@ -144,7 +143,7 @@ func unmarshalFile(file string, bs []byte, v interface{}) error {
 
 // ReadFile reads a file and unmarshals the content into the JSON object.
 func ReadFile(file string, v interface{}) error {
-	bs, err := ioutil.ReadFile(file)
+	bs, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -153,7 +152,7 @@ func ReadFile(file string, v interface{}) error {
 
 // ReadFileMaybeJSON reads a file that might be JSONx or JSON.
 func ReadFileMaybeJSON(file string, v interface{}) error {
-	bs, err := ioutil.ReadFile(file)
+	bs, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}

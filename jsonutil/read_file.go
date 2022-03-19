@@ -17,12 +17,12 @@ package jsonutil
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 )
 
 // ReadFile reads and unmarshals a JSON file.
 func ReadFile(file string, obj interface{}) error {
-	bs, err := ioutil.ReadFile(file)
+	bs, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}

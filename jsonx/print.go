@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -193,5 +192,5 @@ func WriteFile(p string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(p, bs, 0644)
+	return os.WriteFile(p, bs, 0644)
 }

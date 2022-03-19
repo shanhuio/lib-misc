@@ -20,6 +20,7 @@ import (
 
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 )
 
@@ -85,13 +86,8 @@ func TestReadFile(t *testing.T) {
 }
 
 func TestWriteFile(t *testing.T) {
-	f, err := ioutil.TempFile("", "jsonfile-test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	filename := f.Name()
-	f.Close()
-	defer os.Remove(filename)
+	dir := t.TempDir()
+	filename := filepath.Join(dir, "jsonfile-test.json")
 
 	if err := WriteFile(filename, testWriteData); err != nil {
 		t.Fatalf("Failed to Write %s: %s", filename, err)
@@ -119,7 +115,7 @@ func TestWriteFileReadable(t *testing.T) {
 		t.Fatalf("Failed to WriteReadable %s: %s", filename, err)
 	}
 
-	bs, err := ioutil.ReadFile(filename)
+	bs, err := os.ReadFile(filename)
 	if err != nil {
 		t.Fatal(err)
 	}

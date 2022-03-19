@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"bytes"
-	"io/ioutil"
+	"os"
 
 	"shanhu.io/misc/tempfile"
 )
@@ -31,7 +31,7 @@ func TestOpenInTemp(t *testing.T) {
 		}
 	}
 
-	bs, err := ioutil.ReadFile("testdata/testfile.zip")
+	bs, err := os.ReadFile("testdata/testfile.zip")
 	ne(err)
 
 	f, err := tempfile.NewFile("", "ziputil")

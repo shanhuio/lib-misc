@@ -20,7 +20,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"golang.org/x/crypto/ssh"
 	"shanhu.io/misc/errcode"
@@ -87,7 +87,7 @@ func ParsePublicKey(bs []byte) (*rsa.PublicKey, error) {
 // ReadPublicKey parses a marshalled public key file in SSH authorized key
 // file format.
 func ReadPublicKey(f string) (*rsa.PublicKey, error) {
-	bs, err := ioutil.ReadFile(f)
+	bs, err := os.ReadFile(f)
 	if err != nil {
 		return nil, err
 	}

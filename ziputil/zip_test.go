@@ -20,7 +20,6 @@ import (
 
 	"archive/zip"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -30,27 +29,31 @@ import (
 )
 
 func testDiffFile(t *testing.T, f1, f2 string) bool {
-	ne := func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
+	t.Helper()
+
+	bs1, err := os.ReadFile(f1)
+	if err != nil {
+		t.Fatal("read f1: ", err)
 	}
 
-	bs1, err := ioutil.ReadFile(f1)
-	ne(err)
-
-	bs2, err := ioutil.ReadFile(f2)
-	ne(err)
+	bs2, err := os.ReadFile(f2)
+	if err != nil {
+		t.Fatal("read f2: ", err)
+	}
 
 	if !reflect.DeepEqual(bs1, bs2) {
 		return false
 	}
 
 	s1, err := os.Stat(f1)
-	ne(err)
+	if err != nil {
+		t.Fatal("stat f1: ", err)
+	}
 
 	s2, err := os.Stat(f2)
-	ne(err)
+	if err != nil {
+		t.Fatal("stat f2: ", err)
+	}
 
 	if s1.Mode() != s2.Mode() {
 		return false
@@ -59,33 +62,36 @@ func testDiffFile(t *testing.T, f1, f2 string) bool {
 }
 
 func TestZipFile(t *testing.T) {
-	ne := func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
 	temp, err := tempfile.NewFile("", "ziputil")
-	ne(err)
+	if err != nil {
+		t.Fatal("new temp file: ", err)
+	}
 	defer temp.CleanUp()
 
 	const p = "testdata/testfile"
-	ne(ZipFile(p, temp))
+	if err := ZipFile(p, temp); err != nil {
+		t.Fatal("zip file: ", err)
+	}
 
 	size, err := temp.Seek(0, io.SeekCurrent)
-	ne(err)
+	if err != nil {
+		t.Fatal("seek file: ", err)
+	}
 
-	ne(temp.Reset())
+	if err := temp.Reset(); err != nil {
+		t.Fatal("reset: ", err)
+	}
 
-	output, err := ioutil.TempDir("", "ziputil")
-	ne(err)
-
-	defer os.RemoveAll(output)
+	output := t.TempDir()
 
 	z, err := zip.NewReader(temp, size)
-	ne(err)
+	if err != nil {
+		t.Fatal("new reader: ", err)
+	}
 
-	ne(UnzipDir(output, z, true))
+	if err := UnzipDir(output, z, true); err != nil {
+		t.Fatal("unzip: ", err)
+	}
 
 	outPath := path.Join(output, "testfile")
 	if !testDiffFile(t, outPath, p) {
@@ -94,32 +100,36 @@ func TestZipFile(t *testing.T) {
 }
 
 func TestZipDir(t *testing.T) {
-	ne := func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
 	temp, err := tempfile.NewFile("", "ziputil")
-	ne(err)
+	if err != nil {
+		t.Error("new temp file: ", err)
+	}
 	defer temp.CleanUp()
 
 	const p = "testdata/testdir"
-	ne(ZipDir(p, temp))
+	if err := ZipDir(p, temp); err != nil {
+		t.Error("zip dir: ", err)
+	}
 
 	size, err := temp.Seek(0, io.SeekCurrent)
-	ne(err)
+	if err != nil {
+		t.Error("seek: ", err)
+	}
 
-	ne(temp.Reset())
+	if err := temp.Reset(); err != nil {
+		t.Error("reset: ", err)
+	}
 
-	output, err := ioutil.TempDir("", "ziputil")
-	ne(err)
-	defer os.RemoveAll(output)
+	output := t.TempDir()
 
 	z, err := zip.NewReader(temp, size)
-	ne(err)
+	if err != nil {
+		t.Error("new reader: ", err)
+	}
 
-	ne(UnzipDir(output, z, true))
+	if err := UnzipDir(output, z, true); err != nil {
+		t.Error("unzip: ", err)
+	}
 
 	for _, name := range []string{
 		"bin-file", "private-file", "text-file",
@@ -133,27 +143,28 @@ func TestZipDir(t *testing.T) {
 }
 
 func testClearDir(t *testing.T, clear bool) {
-	ne := func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
 	z, err := zip.OpenReader("testdata/testfile.zip")
-	ne(err)
+	if err != nil {
+		t.Fatal("open: ", err)
+	}
 	defer z.Close()
 
-	output, err := ioutil.TempDir("", "ziputil")
-	ne(err)
-	defer os.RemoveAll(output)
+	output := t.TempDir()
 
 	ob := path.Join(output, "native-file")
-	ne(ioutil.WriteFile(ob, []byte("lived here long time ago"), 0600))
+	msg := []byte("lived here long time ago")
+	if err := os.WriteFile(ob, msg, 0600); err != nil {
+		t.Fatal("write file: ", err)
+	}
 
-	ne(UnzipDir(output, &z.Reader, clear))
+	if err := UnzipDir(output, &z.Reader, clear); err != nil {
+		t.Fatal("unzip dir: ", err)
+	}
 
 	exist, err := osutil.Exist(ob)
-	ne(err)
+	if err != nil {
+		t.Fatal("exist: ", err)
+	}
 
 	if clear && exist {
 		t.Error("should clear directory, but still see the file")

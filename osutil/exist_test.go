@@ -18,40 +18,39 @@ package osutil
 import (
 	"testing"
 
-	"io/ioutil"
 	"os"
 	"path"
 )
 
 func TestExist(t *testing.T) {
-	ne := func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	d, err := ioutil.TempDir("", "osutil")
-	ne(err)
-	defer os.RemoveAll(d)
+	d := t.TempDir()
 
 	ok, err := Exist(d)
-	ne(err)
+	if err != nil {
+		t.Fatal("check exists: ", err)
+	}
 	if !ok {
 		t.Errorf("dir %q should exist", d)
 	}
 
 	f := path.Join(d, "post")
-	ne(ioutil.WriteFile(f, []byte("post"), 0600))
+	if err := os.WriteFile(f, []byte("post"), 0600); err != nil {
+		t.Fatal("write file: ", err)
+	}
 
 	ok, err = Exist(f)
-	ne(err)
+	if err != nil {
+		t.Fatal("check file exists: ", err)
+	}
 	if !ok {
 		t.Errorf("file %q should exist", f)
 	}
 
 	ghost := path.Join(d, "ghost")
 	ok, err = Exist(ghost)
-	ne(err)
+	if err != nil {
+		t.Fatal("check ghost file exists: ", err)
+	}
 	if ok {
 		t.Errorf("file %q should not exist", f)
 	}

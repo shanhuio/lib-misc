@@ -16,7 +16,6 @@
 package osutil
 
 import (
-	"io/ioutil"
 	"os"
 
 	"shanhu.io/misc/errcode"
@@ -42,5 +41,5 @@ func ReadPrivateFile(f string) ([]byte, error) {
 	if err := CheckPrivateFile(f); err != nil {
 		return nil, err
 	}
-	return ioutil.ReadFile(f)
+	return os.ReadFile(f)
 }

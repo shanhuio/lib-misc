@@ -17,8 +17,8 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"shanhu.io/misc/errcode"
 	"shanhu.io/misc/osutil"
@@ -57,11 +57,11 @@ func keygen(output string, config *config) error {
 		return errcode.InvalidArgf("key file %q already exists", pemPath)
 	}
 
-	if err := ioutil.WriteFile(pemPath, pri, 0600); err != nil {
+	if err := os.WriteFile(pemPath, pri, 0600); err != nil {
 		return errcode.Annotate(err, "write out key file")
 	}
 
-	return ioutil.WriteFile(output+".pub", pub, 0600)
+	return os.WriteFile(output+".pub", pub, 0600)
 }
 
 func main() {

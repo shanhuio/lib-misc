@@ -18,7 +18,7 @@ package jsonutil
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 )
 
 // WriteFile marshals a JSON object and writes it into a file.
@@ -27,7 +27,7 @@ func WriteFile(file string, obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(file, bs, 0644)
+	return os.WriteFile(file, bs, 0644)
 }
 
 // WriteFileReadable marshals a JSON object with indents and writes it into a
@@ -41,5 +41,5 @@ func WriteFileReadable(f string, v interface{}) error {
 	buf.Write(bs)
 	buf.Write([]byte("\n"))
 
-	return ioutil.WriteFile(f, buf.Bytes(), 0644)
+	return os.WriteFile(f, buf.Bytes(), 0644)
 }

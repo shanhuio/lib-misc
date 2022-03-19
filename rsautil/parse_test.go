@@ -18,7 +18,6 @@ package rsautil
 import (
 	"testing"
 
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -33,13 +32,13 @@ func TestReadKey(t *testing.T) {
 
 	// Recreate the test.pem key file to make sure it has the right permission
 	// bits.
-	testPem, err := ioutil.ReadFile("testdata/test.pem")
+	testPem, err := os.ReadFile("testdata/test.pem")
 	if err != nil {
 		t.Fatal("read test key content: ", err)
 	}
 
 	privateKeyFile := filepath.Join(tmp, "test.pem")
-	if err := ioutil.WriteFile(privateKeyFile, testPem, 0600); err != nil {
+	if err := os.WriteFile(privateKeyFile, testPem, 0600); err != nil {
 		t.Fatal("create test key file: ", err)
 	}
 

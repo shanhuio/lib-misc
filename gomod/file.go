@@ -22,7 +22,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -34,7 +34,7 @@ type File struct {
 
 // Parse parses a go.mod file.
 func Parse(f string) (*File, error) {
-	bs, err := ioutil.ReadFile(f)
+	bs, err := os.ReadFile(f)
 	if err != nil {
 		return nil, err
 	}

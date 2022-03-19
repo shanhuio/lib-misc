@@ -16,14 +16,13 @@
 package osutil
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 )
 
 // ReadTokenFile reads a token string from a file.
 func ReadTokenFile(f string) (string, error) {
-	bs, err := ioutil.ReadFile(f)
+	bs, err := os.ReadFile(f)
 	if err != nil {
 		return "", err
 	}
