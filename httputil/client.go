@@ -84,7 +84,7 @@ func (c *Client) req(m, p string, r io.Reader) (*http.Request, error) {
 		return nil, err
 	}
 	if err := c.addAuth(req); err != nil {
-		return nil, err
+		return nil, errcode.Annotate(err, "add auth to request")
 	}
 	setHeader(req.Header, "User-Agent", c.UserAgent)
 	setHeader(req.Header, "Accept", c.Accept)
@@ -115,7 +115,6 @@ func (c *Client) PutN(p string, r io.Reader, n int64) error {
 	if n >= 0 {
 		req.ContentLength = n
 	}
-
 	resp, err := c.do(context.TODO(), req)
 	if err != nil {
 		return err
@@ -252,7 +251,7 @@ func (c *Client) jsonPost(ctx context.Context, p string, req interface{}) (
 ) {
 	bs, err := json.Marshal(req)
 	if err != nil {
-		return nil, err
+		return nil, errcode.Annotate(err, "marshal request")
 	}
 	httpReq, err := c.reqJSON(http.MethodPost, p, bytes.NewBuffer(bs))
 	if err != nil {
@@ -287,7 +286,7 @@ func (c *Client) CallContext(
 	}
 	dec := json.NewDecoder(httpResp.Body)
 	if err := dec.Decode(resp); err != nil {
-		return err
+		return errcode.Annotate(err, "decode response")
 	}
 	return httpResp.Body.Close()
 }
