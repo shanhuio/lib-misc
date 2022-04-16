@@ -46,7 +46,7 @@ func NewTokenClient(s, tok string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.Token = tok
+	c.TokenSource = NewStaticToken(tok)
 	return c, nil
 }
 

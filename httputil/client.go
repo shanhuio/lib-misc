@@ -23,6 +23,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"shanhu.io/misc/errcode"
 )
 
 // Client performs client that calls to a remote server with an optional token.
@@ -31,9 +33,6 @@ type Client struct {
 
 	// TokenSource is an optional token source to proivde bearer token.
 	TokenSource TokenSource
-	// Token is the optional token to use a bearer token, used only when
-	// TokenSource is nil.
-	Token string
 
 	UserAgent string // Optional User-Agent for each request.
 	Accept    string // Optional Accept header.
@@ -43,13 +42,12 @@ type Client struct {
 
 func (c *Client) addAuth(req *http.Request) error {
 	if c.TokenSource == nil {
-		SetAuthToken(req.Header, c.Token)
 		return nil
 	}
 	ctx := req.Context()
-	tok, err := c.TokenSource.Token(ctx)
+	tok, err := c.TokenSource.Token(ctx, c.Transport)
 	if err != nil {
-		return err
+		return errcode.Annotate(err, "get token")
 	}
 	SetAuthToken(req.Header, tok)
 	return nil
