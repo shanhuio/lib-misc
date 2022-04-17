@@ -70,7 +70,13 @@ func (d *Decoder) Decode(v interface{}) []*lexing.Error {
 	return nil
 }
 
-// DecodeSeries decode a typed series.
+func jsonUnmarshalStrict(bs []byte, v interface{}) error {
+	dec := json.NewDecoder(bytes.NewReader(bs))
+	dec.DisallowUnknownFields()
+	return dec.Decode(v)
+}
+
+// DecodeSeries decode a typed series. It uses strict JSON decoding.
 func (d *Decoder) DecodeSeries(tm TypeMaker) (
 	[]*Typed, []*lexing.Error,
 ) {
@@ -97,7 +103,7 @@ func (d *Decoder) DecodeSeries(tm TypeMaker) (
 			if errs != nil {
 				errList.AddAll(errs)
 			}
-			if err := json.Unmarshal(bs, v); err != nil {
+			if err := jsonUnmarshalStrict(bs, v); err != nil {
 				errList.Add(&lexing.Error{
 					Pos:  pos,
 					Err:  fmt.Errorf("json marshal: %s", err),
