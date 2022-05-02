@@ -48,7 +48,7 @@ func ModeMeta(mode int64) *Meta { return &Meta{Mode: mode} }
 
 func (f *streamFile) writeTo(tw *tar.Writer) error {
 	if f.zip {
-		return TarZipFile(tw, f.file)
+		return TarZipFile(tw, f.file, f.name)
 	}
 
 	if f.file != "" {
@@ -138,8 +138,9 @@ func (s *Stream) AddFile(name string, m *Meta, f string) {
 }
 
 // AddZipFile adds a zip file into the stream.
-func (s *Stream) AddZipFile(f string) {
+func (s *Stream) AddZipFile(name, f string) {
 	s.files = append(s.files, &streamFile{
+		name: name, // base directory.
 		file: f,
 		zip:  true,
 	})

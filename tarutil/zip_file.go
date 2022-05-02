@@ -19,6 +19,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"io"
+	"path"
 
 	"shanhu.io/misc/errcode"
 )
@@ -36,7 +37,7 @@ func copyZipFile(w io.Writer, f *zip.File) error {
 }
 
 // TarZipFile puts all files from a zip file into a tar stream.
-func TarZipFile(tw *tar.Writer, p string) error {
+func TarZipFile(tw *tar.Writer, p string, dir string) error {
 	z, err := zip.OpenReader(p)
 	if err != nil {
 		return errcode.Annotate(err, "open zip file")
@@ -48,7 +49,11 @@ func TarZipFile(tw *tar.Writer, p string) error {
 		if err != nil {
 			return errcode.Annotatef(err, "tar stat for: %q", f.Name)
 		}
-		tarStat.Name = f.Name
+		name := f.Name
+		if dir != "" {
+			name = path.Join(dir, name)
+		}
+		tarStat.Name = name
 		if err := tw.WriteHeader(tarStat); err != nil {
 			return errcode.Annotatef(err, "write header: %q", f.Name)
 		}
