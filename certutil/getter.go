@@ -48,14 +48,12 @@ type getter struct {
 }
 
 type getterConfig struct {
-	getFunc     GetFunc
 	manualCerts map[string]*tls.Certificate
-
-	now   func() time.Time
-	sleep func(d time.Duration)
+	now         func() time.Time
+	sleep       func(d time.Duration)
 }
 
-func newGetter(config *getterConfig) *getter {
+func newGetter(f GetFunc, config *getterConfig) *getter {
 	now := timeutil.NowFunc(config.now)
 	sleep := config.sleep
 	if sleep == nil {
@@ -65,7 +63,7 @@ func newGetter(config *getterConfig) *getter {
 	const cleanUpPeriod = time.Hour
 
 	return &getter{
-		getFunc: config.getFunc,
+		getFunc: f,
 		now:     now,
 		sleep:   sleep,
 
@@ -100,6 +98,14 @@ func (g *getter) cleanUp() {
 	}
 }
 
+// getterDelay is the time dealy of the return of the certificate if the
+// certificate is new.
+const getterDelay = 2 * time.Second
+
+// getterMature is the age where there will be no more delaying on new
+// certificates.
+const getterMature = 3 * time.Second
+
 func (g *getter) delayUnlessMature(cert *x509.Certificate, now time.Time) {
 	// We use the SerialNumber as the key here. This assumes that all the
 	// certificates are issued by the same issuer, and the issuer uses
@@ -109,24 +115,15 @@ func (g *getter) delayUnlessMature(cert *x509.Certificate, now time.Time) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	const (
-		// Delay the return of the certificate this amount of time if the
-		// certificate is new.
-		delay = 2 * time.Second
-
-		// After this amount of time, do not delay anymore.
-		mature = 3 * time.Second
-	)
-
 	entry, ok := g.certs[k]
 	if !ok {
-		g.sleep(delay)
+		g.sleep(getterDelay)
 		g.certs[k] = &timeEntry{
-			mature: now.Add(mature),
+			mature: now.Add(getterMature),
 			expire: cert.NotAfter,
 		}
 	} else if now.Before(entry.mature) {
-		g.sleep(delay)
+		g.sleep(getterDelay)
 	}
 }
 
@@ -166,7 +163,7 @@ func (g *getter) get(hello *tls.ClientHelloInfo) (
 }
 
 func wrapAutoCert(f GetFunc, config *getterConfig) GetFunc {
-	g := newGetter(config)
+	g := newGetter(f, config)
 	return g.get
 }
 
@@ -178,8 +175,5 @@ func wrapAutoCert(f GetFunc, config *getterConfig) GetFunc {
 func WrapAutoCert(
 	f GetFunc, manualCerts map[string]*tls.Certificate,
 ) GetFunc {
-	return wrapAutoCert(f, &getterConfig{
-		getFunc:     f,
-		manualCerts: manualCerts,
-	})
+	return wrapAutoCert(f, &getterConfig{manualCerts: manualCerts})
 }
