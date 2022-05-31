@@ -16,38 +16,35 @@
 package certutil
 
 import (
-	"sync"
+	"testing"
+
 	"time"
 )
 
-// ticker provides a check() function which returns true once every period
-// if the given time is after the period's start.
-type ticker struct {
-	mu     sync.Mutex
-	next   time.Time
-	period time.Duration
-}
+func TestGapper(t *testing.T) {
+	now := time.Now()
+	ticker := newGapperNow(time.Second, now)
 
-func newTicker(period time.Duration, first time.Time) *ticker {
-	return &ticker{
-		next:   first,
-		period: period,
+	type testPoint struct {
+		d    time.Duration
+		want bool
 	}
-}
-
-func newTickerNow(period time.Duration, now time.Time) *ticker {
-	return newTicker(period, now.Add(period))
-}
-
-// check returns true once every period if the given timestamp now falls within
-// the peroid.
-func (t *ticker) check(now time.Time) bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if now.After(t.next) {
-		t.next = now.Add(t.period)
-		return true
+	for i, test := range []*testPoint{
+		{d: time.Duration(0), want: false},
+		{d: time.Second, want: true},
+		{d: time.Second, want: false},
+		{d: time.Second + time.Second/2, want: false},
+		{d: 2*time.Second + time.Second/2, want: true},
+		{d: 2*time.Second + time.Second*7/10, want: false},
+		{d: 3 * time.Second, want: false},
+		{d: 3*time.Second + time.Second/2, want: true},
+	} {
+		got := ticker.check(now.Add(test.d))
+		if got != test.want {
+			t.Errorf(
+				"check #%d with %s, got %t, want %t",
+				i, test.d, got, test.want,
+			)
+		}
 	}
-	return false
 }

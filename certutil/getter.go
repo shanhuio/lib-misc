@@ -44,7 +44,7 @@ type getter struct {
 	certs  map[string]*timeEntry
 	manual map[string]*tls.Certificate
 
-	cleanUpTimer *ticker
+	cleanUpTimer *gapper
 }
 
 type getterConfig struct {
@@ -72,7 +72,7 @@ func newGetter(config *getterConfig) *getter {
 		certs:  make(map[string]*timeEntry),
 		manual: config.manualCerts,
 
-		cleanUpTimer: newTickerNow(cleanUpPeriod, now()),
+		cleanUpTimer: newGapperNow(cleanUpPeriod, now()),
 	}
 }
 
