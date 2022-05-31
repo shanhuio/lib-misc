@@ -13,29 +13,27 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package argon2
+package bufpool
 
 import (
 	"testing"
 )
 
-func TestPassword(t *testing.T) {
-	pass := []byte("my password")
-
-	ar, err := NewPassword(pass)
-	if err != nil {
-		t.Fatal("hash with argon2: ", err)
+func TestBytes(t *testing.T) {
+	const size = 1024
+	p := NewBytes(1024)
+	buf := p.Get()
+	if len(buf) != size {
+		t.Errorf("buf got size %d, want %d", len(buf), size)
 	}
 
-	if !ar.Check(pass) {
-		t.Error("check password failed")
-	}
+	p.Put(buf)
+}
 
-	if !ar.CheckString(string(pass)) {
-		t.Error("check password string failed")
-	}
-
-	if ar.Check([]byte("wrong password")) {
-		t.Error("check wrong password passed")
+func TestBytes_defaultSize(t *testing.T) {
+	p := NewBytes(0)
+	buf := p.Get()
+	if len(buf) != DefaultBytesSize {
+		t.Errorf("buf got size %d, want %d", len(buf), DefaultBytesSize)
 	}
 }

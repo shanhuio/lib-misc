@@ -26,6 +26,9 @@ type Bytes struct {
 	pool *sync.Pool
 }
 
+// DefaultBytesSize is the default size of a bytes slice in a Bytes pool.
+const DefaultBytesSize = 32 * 1024
+
 // NewBytes creates a new bytes buffer pool, where each buffer
 // is of bufSize. When bufSize is 0, 32k is used.
 func NewBytes(bufSize int) *Bytes {
