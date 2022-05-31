@@ -16,8 +16,8 @@
 package argon2
 
 import (
-	"crypto/rand"
 	"crypto/subtle"
+	"io"
 
 	"golang.org/x/crypto/argon2"
 	"shanhu.io/misc/errcode"
@@ -33,12 +33,20 @@ type Password struct {
 	KeyLen  uint32
 }
 
-// NewPassword creates a new password encrypted by argon2 algorithm.
-func NewPassword(password []byte) (*Password, error) {
-	// Reference: https://tools.ietf.org/id/draft-irtf-cfrg-argon2-05.html
+func readSalt(r io.Reader) ([]byte, error) {
 	const saltLen = 16
 	salt := make([]byte, saltLen)
-	if _, err := rand.Read(salt); err != nil {
+	if _, err := r.Read(salt); err != nil {
+		return nil, err
+	}
+	return salt, nil
+}
+
+// NewPassword creates a new password encrypted by argon2 algorithm.
+func NewPassword(password []byte, rand io.Reader) (*Password, error) {
+	// Reference: https://tools.ietf.org/id/draft-irtf-cfrg-argon2-05.html
+	salt, err := readSalt(rand)
+	if err != nil {
 		return nil, errcode.Annotate(err, "create salt")
 	}
 

@@ -16,13 +16,25 @@
 package errcode
 
 import (
+	"errors"
 	"fmt"
 )
 
 // Error is a generic error with a string error code.
 type Error struct {
-	Code  string // code is the type of the error.
-	error        // error is the error message, human friendly.
+	Code    string // code is the type of the error.
+	Err     error  // error is the error message, human friendly.
+	Message string // alternative message.
+}
+
+// Unwrap returns the unwrapped error.
+func (e *Error) Unwrap() error { return e.Err }
+
+func (e *Error) Error() string {
+	if e.Message != "" {
+		return e.Message
+	}
+	return e.Err.Error()
 }
 
 // Common general error codes
@@ -37,16 +49,17 @@ const (
 // Add creates a new error with code as the error code.
 func Add(code string, err error) *Error {
 	return &Error{
-		Code:  code,
-		error: err,
+		Code: code,
+		Err:  err,
 	}
 }
 
 // Of returns the code of the error. For errors that
 // do not have a code, it returns empty string.
 func Of(err error) string {
-	if codedErr, ok := err.(*Error); ok {
-		return codedErr.Code
+	codeErr := new(Error)
+	if errors.As(err, &codeErr) {
+		return codeErr.Code
 	}
 	return ""
 }
@@ -81,18 +94,20 @@ func Errorf(code string, f string, args ...interface{}) *Error {
 	return Add(code, fmt.Errorf(f, args...))
 }
 
-// AltErrorf replaces the message of e, but keeps the error code.
-func AltErrorf(err error, msg string, args ...interface{}) error {
-	cerr, ok := err.(*Error)
-	if !ok {
-		return fmt.Errorf(msg, args...)
+// AltErrorf replaces the message of err to be the formatted message, but keeps
+// the error code.
+func AltErrorf(err error, f string, args ...interface{}) error {
+	msg := fmt.Sprintf(f, args...)
+	return &Error{
+		Err:     err,
+		Message: msg,
+		Code:    Of(err),
 	}
-	return Errorf(cerr.Code, msg, args...)
 }
 
 // Annotate annotates an error but keeps the error code.
 func Annotate(err error, msg string) error {
-	return AltErrorf(err, "%s: %s", msg, err)
+	return fmt.Errorf("%s: %w", msg, err)
 }
 
 // Annotatef annotates an error with a formatted message but keeps the error
