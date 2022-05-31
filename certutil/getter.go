@@ -44,7 +44,7 @@ type getter struct {
 	certs  map[string]*timeEntry
 	manual map[string]*tls.Certificate
 
-	cleanUpTimer *timer
+	cleanUpTimer *ticker
 }
 
 type getterConfig struct {
@@ -72,7 +72,7 @@ func newGetter(config *getterConfig) *getter {
 		certs:  make(map[string]*timeEntry),
 		manual: config.manualCerts,
 
-		cleanUpTimer: newTimerWithNow(cleanUpPeriod, now()),
+		cleanUpTimer: newTickerNow(cleanUpPeriod, now()),
 	}
 }
 
@@ -165,18 +165,21 @@ func (g *getter) get(hello *tls.ClientHelloInfo) (
 	return cert, nil
 }
 
-// WrapAutoCert wraps the GetCertificate function from an
-// *autocert.Manager. The resulting function adds a small delay of several
-// seconds for the first time a certificate is requested, so that newly
-// issued certificates won't be rejected upright by strict browsers on failed
-// SCT timestamps checking due to clock skews. Optinally, a map of manual
-// certificates can be used for a set of domains.
+func wrapAutoCert(f GetFunc, config *getterConfig) GetFunc {
+	g := newGetter(config)
+	return g.get
+}
+
+// WrapAutoCert wraps the GetCertificate function. The resulting function adds
+// a small delay of several seconds for the first time a certificate is
+// requested, so that newly issued certificates won't be rejected upright by
+// strict browsers on failed SCT timestamps checking due to clock skews.
+// Optinally, a map of manual certificates can be used for a set of domains.
 func WrapAutoCert(
 	f GetFunc, manualCerts map[string]*tls.Certificate,
 ) GetFunc {
-	g := newGetter(&getterConfig{
+	return wrapAutoCert(f, &getterConfig{
 		getFunc:     f,
 		manualCerts: manualCerts,
 	})
-	return g.get
 }

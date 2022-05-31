@@ -20,24 +20,28 @@ import (
 	"time"
 )
 
-type timer struct {
+// ticker provides a check() function which returns true once every period
+// if the given time is after the period's start.
+type ticker struct {
 	mu     sync.Mutex
 	next   time.Time
 	period time.Duration
 }
 
-func newTimer(period time.Duration, first time.Time) *timer {
-	return &timer{
+func newTicker(period time.Duration, first time.Time) *ticker {
+	return &ticker{
 		next:   first,
 		period: period,
 	}
 }
 
-func newTimerWithNow(period time.Duration, now time.Time) *timer {
-	return newTimer(period, now.Add(period))
+func newTickerNow(period time.Duration, now time.Time) *ticker {
+	return newTicker(period, now.Add(period))
 }
 
-func (t *timer) check(now time.Time) bool {
+// check returns true once every period if the given timestamp now falls within
+// the peroid.
+func (t *ticker) check(now time.Time) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
