@@ -15,5 +15,5 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
-	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 )
